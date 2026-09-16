@@ -608,12 +608,32 @@ div[data-baseweb="select"] > div {
     border-radius: 9px;
 }
 
+/* Date fields: white field + black date text.
+   Streamlit/BaseWeb can otherwise inherit the dark theme used by the browser. */
+.stDateInput div[data-baseweb="input"] > div,
+.stDateInput div[data-baseweb="input"] > div > div {
+    background: #ffffff !important;
+    border-color: #cfd8dc !important;
+}
+.stDateInput div[data-baseweb="input"] input,
+.stDateInput input {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    caret-color: #111111 !important;
+}
+.stDateInput button,
+.stDateInput button svg {
+    color: #111111 !important;
+    fill: #111111 !important;
+}
+
+/* Text/number inputs that are not date fields. */
 div[data-baseweb="input"] input,
 div[data-baseweb="select"] input,
 div[data-baseweb="select"] [role="combobox"],
 .stTextInput input,
-.stNumberInput input,
-.stDateInput input {
+.stNumberInput input {
     color: #111111 !important;
     -webkit-text-fill-color: #111111 !important;
 }
@@ -661,6 +681,45 @@ div[data-baseweb="popover"] li[role="option"]:hover {
     background: #2b2e38 !important;
 }
 
+/* Target Scene / selectbox: dark control with white selected text. */
+div[data-baseweb="select"] > div {
+    background: #111318 !important;
+    border-color: #3b3e49 !important;
+}
+div[data-baseweb="select"] [role="combobox"],
+div[data-baseweb="select"] [role="combobox"] *,
+div[data-baseweb="select"] input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+div[data-baseweb="select"] svg {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* Strong override for the opened Target Scene list. */
+div[data-baseweb="popover"] [role="listbox"],
+div[data-baseweb="popover"] [role="listbox"] *,
+div[data-baseweb="popover"] [role="option"],
+div[data-baseweb="popover"] [role="option"] *,
+ul[role="listbox"],
+ul[role="listbox"] *,
+li[role="option"],
+li[role="option"] * {
+    background-color: #111318 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+div[data-baseweb="popover"] [role="option"]:hover,
+div[data-baseweb="popover"] [role="option"]:hover *,
+li[role="option"]:hover,
+li[role="option"]:hover * {
+    background-color: #2b2e38 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
 .stDateInput, .stSlider, .stNumberInput, .stSelectbox {
     margin-bottom: 0.15rem;
 }
@@ -677,15 +736,16 @@ div[data-baseweb="popover"] li[role="option"]:hover {
     color: #111111 !important;
 }
 
-/* ---------- Dark native controls: keep their values white ---------- */
-/* Streamlit/BaseWeb may render date, number and threshold controls with a dark field. */
-div[data-baseweb="input"] input,
+/* ---------- Dark native controls ---------- */
+/* Number / threshold controls use a dark field, so their values stay white.
+   Date controls are intentionally excluded because they are white fields above. */
 .stNumberInput input,
-.stDateInput input,
-.stNumberInput [data-baseweb="input"] input,
-.stDateInput [data-baseweb="input"] input {
+.stNumberInput [data-baseweb="input"] input {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
+}
+.stNumberInput div[data-baseweb="input"] > div {
+    background: #272833 !important;
 }
 
 /* Threshold/slider numeric value when it is displayed inside a dark thumb/track */
@@ -711,9 +771,17 @@ input:-webkit-autofill:focus {
     caret-color: #ffffff !important;
 }
 
-/* Final override for dark date and number fields */
-.stDateInput input, .stNumberInput input, div[data-baseweb="input"] input {
-    color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; caret-color:#ffffff !important;
+/* Final control colors: date = white/black, number = dark/white. */
+.stDateInput input {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    caret-color: #111111 !important;
+    background: #ffffff !important;
+}
+.stNumberInput input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
 }
 
 /* ---------- Copernicus login ---------- */
@@ -739,6 +807,25 @@ input:-webkit-autofill:focus {
     font-size: 0.72rem;
     line-height: 1.45;
     margin: 0.2rem 0 0.45rem 0;
+}
+
+/* ---------- Copernicus login fields ---------- */
+/* Login fields are dark by design; all text inside them must therefore be white. */
+.auth-card div[data-baseweb="input"] > div {
+    background: #272833 !important;
+    border-color: #3b3e49 !important;
+}
+.auth-card input,
+.auth-card div[data-baseweb="input"] input {
+    background: #272833 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+}
+.auth-card input::placeholder {
+    color: #d7d9e0 !important;
+    -webkit-text-fill-color: #d7d9e0 !important;
+    opacity: 1 !important;
 }
 
 /* ---------- Buttons ---------- */
