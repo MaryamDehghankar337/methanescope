@@ -712,8 +712,22 @@ input:-webkit-autofill:focus {
 
 /* Final override for dark date and number fields */
 .stDateInput input, .stNumberInput input, div[data-baseweb="input"] input {
-    color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; caret-color:#ffffff !important;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    caret-color:#ffffff !important;
 }
+
+/* Date input labels */
+.stDateInput label,
+.stDateInput label p,
+.stDateInput label span,
+[data-testid="stDateInput"] label,
+[data-testid="stDateInput"] label p,
+[data-testid="stDateInput"] label span {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
 
 /* ---------- Copernicus login ---------- */
 .auth-card {
