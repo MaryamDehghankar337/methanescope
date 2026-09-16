@@ -625,13 +625,14 @@ textarea::placeholder {
     opacity: 1 !important;
 }
 
-/* Selectbox selected value */
-div[data-baseweb="select"] [role="combobox"],
-div[data-baseweb="select"] [role="combobox"] *,
-div[data-baseweb="select"] > div,
-div[data-baseweb="select"] > div * {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+/* Selectbox selected value and dropdown text */
+div[data-baseweb="select"] * {
+    color: #111111 !important;
+}
+
+[role="listbox"] *,
+[role="option"] * {
+    color: #111111 !important;
 }
 
 /* Dark dropdown popup: Target scene options must be white and readable */
@@ -712,22 +713,8 @@ input:-webkit-autofill:focus {
 
 /* Final override for dark date and number fields */
 .stDateInput input, .stNumberInput input, div[data-baseweb="input"] input {
-    color:#ffffff !important;
-    -webkit-text-fill-color:#ffffff !important;
-    caret-color:#ffffff !important;
+    color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; caret-color:#ffffff !important;
 }
-
-/* Date input labels */
-.stDateInput label,
-.stDateInput label p,
-.stDateInput label span,
-[data-testid="stDateInput"] label,
-[data-testid="stDateInput"] label p,
-[data-testid="stDateInput"] label span {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-}
-
 
 /* ---------- Copernicus login ---------- */
 .auth-card {
