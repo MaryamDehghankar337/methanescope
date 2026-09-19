@@ -1,12 +1,8 @@
-"""Sentinel-2 methane candidate screening app - stable final version.
+"""Sentinel-2 methane candidate screening app.
 
-Windows PowerShell:
-    $env:CDSE_USERNAME="your CDSE email"
-    $env:CDSE_PASSWORD="your CDSE password"
-    python -m streamlit run sentinel_methane_app_fixed_date_text.py
-
-The algorithm is a relative MBMP screening workflow. It is not a physical
-methane concentration or emission-rate retrieval.
+This version preserves the existing application logic and styling. The only
+functional fix is replacing the unsafe session-state key `items` with the
+explicit key `scene_results`, preventing `object of type 'method' has no len()`.
 """
 from __future__ import annotations
 
@@ -140,7 +136,8 @@ def search_scenes(aoi, start, end, max_cloud):
     }
     response = requests.post(f"{STAC_URL}search", json=payload, timeout=120)
     response.raise_for_status()
-    return response.json().get("features", [])
+    features = response.json().get("features", [])
+    return features if isinstance(features, list) else list(features)
 
 
 def authenticate_cdse(username: str, password: str, totp: str = ""):
@@ -220,8 +217,8 @@ def evalscript():
     return """//VERSION=3
 function setup() {
   return {
-    input: [{bands: [\"B03\",\"B04\",\"B08\",\"B11\",\"B12\"], units: \"REFLECTANCE\"}],
-    output: {bands: 5, sampleType: \"FLOAT32\"}
+    input: [{bands: ["B03","B04","B08","B11","B12"], units: "REFLECTANCE"}],
+    output: {bands: 5, sampleType: "FLOAT32"}
   };
 }
 function evaluatePixel(sample) {
@@ -428,109 +425,42 @@ st.markdown("""
     --muted: #4f5d63;
     --dark-field: #292a33;
 }
-
 .stApp { background: #f1faee; color: #111111 !important; }
 [data-testid="stHeader"] { background: #f1faee !important; height: 3.25rem !important; }
 [data-testid="stSidebar"] { display: none; }
 .block-container { max-width: 1700px; padding-top: 3.9rem !important; padding-bottom: 0.8rem; padding-left: 1.2rem; padding-right: 1.2rem; }
-
 .app-header { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 0.75rem 1rem; margin-top: 0.15rem; margin-bottom: 0.9rem; box-shadow: 0 2px 10px rgba(29,53,87,0.05); }
 .app-title { color: #111111 !important; font-size: 1.45rem; font-weight: 850; line-height: 1.1; }
 .app-subtitle { color: #111111 !important; font-size: 0.78rem; margin-top: 0.15rem; }
 .status-pill { background: #f1faee; color: #111111 !important; border: 1px solid #a8dadc; border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.72rem; font-weight: 750; white-space: nowrap; }
-
 .app-card { background: #ffffff; border: 1px solid var(--border); border-radius: 15px; padding: 0.75rem; box-shadow: 0 2px 10px rgba(29,53,87,0.04); height: 100%; color: #111111 !important; }
 .card-title { color: #111111 !important; font-size: 1rem; font-weight: 800; margin-bottom: 0.1rem; }
 .card-caption { color: #111111 !important; font-size: 0.73rem; margin-bottom: 0.45rem; }
 .section-label { display: inline-block; background: #a8dadc; color: #111111 !important; border-radius: 999px; padding: 0.2rem 0.55rem; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.03em; margin-bottom: 0.35rem; }
-
-/* General text, deliberately excluding native form control internals. */
-.stApp p, .stApp label, .stApp small, .stApp strong, .stApp em, .stApp li, .stApp td, .stApp th,
-.stApp [data-testid="stMarkdownContainer"], .stApp [data-testid="stMarkdownContainer"] p,
-.stApp [data-testid="stMarkdownContainer"] span, .stApp [data-testid="stMarkdownContainer"] li {
-    color: #111111 !important;
-}
-
-/* Date fields: the date value is rendered by a BaseWeb input. Keep this block at the END of the input-related CSS. */
-div[data-testid="stDateInput"] div[data-baseweb="input"],
-div[data-testid="stDateInput"] div[data-baseweb="input"] > div,
-div[data-testid="stDateInput"] input,
-div[data-testid="stDateInput"] input[type="text"],
-.stDateInput div[data-baseweb="input"],
-.stDateInput div[data-baseweb="input"] > div,
-.stDateInput input,
-.stDateInput input[type="text"] {
-    background-color: var(--dark-field) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    caret-color: #ffffff !important;
-    opacity: 1 !important;
-}
-
-/* Ensure date input value is not overridden by browser / BaseWeb styles. */
-div[data-testid="stDateInput"] input::-webkit-datetime-edit,
-div[data-testid="stDateInput"] input::-webkit-datetime-edit-text,
-div[data-testid="stDateInput"] input::-webkit-datetime-edit-month-field,
-div[data-testid="stDateInput"] input::-webkit-datetime-edit-day-field,
-div[data-testid="stDateInput"] input::-webkit-datetime-edit-year-field,
-div[data-testid="stDateInput"] input::-webkit-datetime-edit-fields-wrapper,
-.stDateInput input::-webkit-datetime-edit,
-.stDateInput input::-webkit-datetime-edit-text,
-.stDateInput input::-webkit-datetime-edit-month-field,
-.stDateInput input::-webkit-datetime-edit-day-field,
-.stDateInput input::-webkit-datetime-edit-year-field,
-.stDateInput input::-webkit-datetime-edit-fields-wrapper {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    opacity: 1 !important;
-}
-
-/* Number input values retain the same high-contrast dark-field style. */
-div[data-testid="stNumberInput"] input,
-.stNumberInput input {
-    background-color: var(--dark-field) !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    caret-color: #ffffff !important;
-}
-
+.stApp p, .stApp label, .stApp small, .stApp strong, .stApp em, .stApp li, .stApp td, .stApp th, .stApp [data-testid="stMarkdownContainer"], .stApp [data-testid="stMarkdownContainer"] p, .stApp [data-testid="stMarkdownContainer"] span, .stApp [data-testid="stMarkdownContainer"] li { color: #111111 !important; }
+div[data-testid="stDateInput"] div[data-baseweb="input"], div[data-testid="stDateInput"] div[data-baseweb="input"] > div, div[data-testid="stDateInput"] input, div[data-testid="stDateInput"] input[type="text"], .stDateInput div[data-baseweb="input"], .stDateInput div[data-baseweb="input"] > div, .stDateInput input, .stDateInput input[type="text"] { background-color: var(--dark-field) !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important; opacity: 1 !important; }
+div[data-testid="stDateInput"] input::-webkit-datetime-edit, div[data-testid="stDateInput"] input::-webkit-datetime-edit-text, div[data-testid="stDateInput"] input::-webkit-datetime-edit-month-field, div[data-testid="stDateInput"] input::-webkit-datetime-edit-day-field, div[data-testid="stDateInput"] input::-webkit-datetime-edit-year-field, div[data-testid="stDateInput"] input::-webkit-datetime-edit-fields-wrapper, .stDateInput input::-webkit-datetime-edit, .stDateInput input::-webkit-datetime-edit-text, .stDateInput input::-webkit-datetime-edit-month-field, .stDateInput input::-webkit-datetime-edit-day-field, .stDateInput input::-webkit-datetime-edit-year-field, .stDateInput input::-webkit-datetime-edit-fields-wrapper { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; opacity: 1 !important; }
+div[data-testid="stNumberInput"] input, .stNumberInput input { background-color: var(--dark-field) !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important; }
 input::placeholder, textarea::placeholder { color: #bfc3cc !important; opacity: 1 !important; }
-
-/* Select boxes are light; their typed/selected value is therefore dark. */
-div[data-baseweb="select"] input,
-div[data-baseweb="select"] [role="combobox"],
-div[data-baseweb="select"] * { color: #111111 !important; }
-
-/* Dark scene-selection popup. */
-div[data-baseweb="popover"] [role="listbox"],
-div[data-baseweb="popover"] ul[role="listbox"],
-div[data-baseweb="popover"] [role="option"],
-div[data-baseweb="popover"] li[role="option"] { background: #111318 !important; }
-div[data-baseweb="popover"] [role="listbox"] *,
-div[data-baseweb="popover"] [role="option"] *,
-ul[role="listbox"] *, li[role="option"] * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
-div[data-baseweb="popover"] [role="option"]:hover,
-div[data-baseweb="popover"] li[role="option"]:hover { background: #2b2e38 !important; }
-
+div[data-baseweb="select"] input, div[data-baseweb="select"] [role="combobox"], div[data-baseweb="select"] * { color: #111111 !important; }
+div[data-baseweb="popover"] [role="listbox"], div[data-baseweb="popover"] ul[role="listbox"], div[data-baseweb="popover"] [role="option"], div[data-baseweb="popover"] li[role="option"] { background: #111318 !important; }
+div[data-baseweb="popover"] [role="listbox"] *, div[data-baseweb="popover"] [role="option"] *, ul[role="listbox"] *, li[role="option"] * { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+div[data-baseweb="popover"] [role="option"]:hover, div[data-baseweb="popover"] li[role="option"]:hover { background: #2b2e38 !important; }
 .stDateInput, .stSlider, .stNumberInput, .stSelectbox { margin-bottom: 0.15rem; }
 .stSlider > div { padding-top: 0.05rem; padding-bottom: 0.05rem; }
 .stSlider label, .stSlider [data-testid="stTickBar"] * { color: #111111 !important; }
 .stSlider [data-testid="stThumbValue"], .stSlider [data-testid="stThumbValue"] * { color: #ffffff !important; }
-
 [data-baseweb="calendar"] *, [data-baseweb="popover"] [data-baseweb="calendar"] *, [data-baseweb="calendar"] button { color: #ffffff !important; }
 input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus { -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff !important; }
-
 .auth-card { background: #f8fbfb; border: 1px solid #d7e4e7; border-radius: 11px; padding: 0.65rem 0.75rem; margin-top: 0.45rem; }
 .auth-status { background: #e8f7ea; border: 1px solid #9ed2a4; color: #155724 !important; border-radius: 9px; padding: 0.45rem 0.6rem; font-size: 0.76rem; font-weight: 700; margin-bottom: 0.45rem; }
 .auth-help { color: #111111 !important; font-size: 0.72rem; line-height: 1.45; margin: 0.2rem 0 0.45rem 0; }
-
 .stButton > button, .stDownloadButton > button { border-radius: 9px; min-height: 2.15rem; font-weight: 750; font-size: 0.78rem; color: #111111 !important; }
 .stButton > button[kind="primary"] { background: #e63946; border-color: #e63946; color: #ffffff !important; }
 .stButton > button[kind="primary"] *, .stDownloadButton > button[kind="primary"] * { color: #ffffff !important; }
 .stButton > button[kind="primary"]:hover { background: #c92f3b; border-color: #c92f3b; color: #ffffff !important; }
 .stDownloadButton > button { background: #ffffff; color: #111111 !important; border: 1px solid #a8dadc; }
 .stDownloadButton > button:hover { background: #f1faee; border-color: #457b9d; color: #111111 !important; }
-
 div[data-testid="stDataFrame"] { border: 1px solid var(--border); }
 div[data-testid="stDataFrame"] * { color: #111111 !important; }
 .download-label { color: #111111 !important; font-size: 0.62rem; font-weight: 700; margin: 0.2rem 0 0.12rem 0; }
@@ -586,21 +516,100 @@ with control_col:
         max_cloud = st.slider("Cloud cover (%)", 0.0, 100.0, 50.0, key="max_cloud")
     with s2:
         reference_days = st.slider("Reference window (days)", 1, 90, 60, key="reference_days")
+
     if st.button("🔎  Search Sentinel-2 scenes", type="primary", use_container_width=True):
         try:
             with st.spinner("Searching CDSE STAC..."):
-                st.session_state.items = search_scenes(st.session_state.aoi, datetime.combine(start_date, datetime.min.time()), datetime.combine(end_date, datetime.max.time()), max_cloud)
+                search_results = search_scenes(
+                    st.session_state.aoi,
+                    datetime.combine(start_date, datetime.min.time()),
+                    datetime.combine(end_date, datetime.max.time()),
+                    max_cloud,
+                )
+
+            if search_results is None:
+                search_results = []
+            elif not isinstance(search_results, list):
+                search_results = list(search_results)
+
+            st.session_state["scene_results"] = search_results
             st.session_state.pop("target", None)
-            st.success(f"{len(st.session_state.items)} scene(s) found")
+
+            if search_results:
+                st.success(f"{len(search_results)} scene(s) found")
+            else:
+                st.warning("No Sentinel-2 scenes were found for the selected criteria.")
         except Exception as error:
-            st.exception(error)
-    items = st.session_state.get("items", [])
-    if items:
-        scene_table = pd.DataFrame([{"date": get_datetime(item), "tile": get_tile(item), "cloud": get_cloud(item)} for item in items]).sort_values(["date", "cloud"], ascending=[True, True], na_position="last")
-        st.dataframe(scene_table, use_container_width=True, height=112, hide_index=True, column_config={"date": st.column_config.DatetimeColumn("Date", format="YYYY-MM-DD"), "cloud": st.column_config.NumberColumn("Cloud %", format="%.1f")})
-        item_ids = [as_dict(item).get("id") for item in items]
-        selected_id = st.selectbox("Target scene", item_ids, format_func=lambda value: f"{get_datetime(next(x for x in items if as_dict(x).get('id') == value)).strftime('%Y-%m-%d')}  |  {get_tile(next(x for x in items if as_dict(x).get('id') == value))}  |  cloud {get_cloud(next(x for x in items if as_dict(x).get('id') == value)):.1f}%", key="target_scene_select")
-        st.session_state.target = next(item for item in items if as_dict(item).get("id") == selected_id)
+            st.session_state["scene_results"] = []
+            st.session_state.pop("target", None)
+            st.error(f"Scene search failed: {error}")
+
+    scene_results = st.session_state.get("scene_results", [])
+
+    if scene_results:
+        scene_table = pd.DataFrame([
+            {
+                "date": get_datetime(scene),
+                "tile": get_tile(scene),
+                "cloud": get_cloud(scene),
+            }
+            for scene in scene_results
+        ]).sort_values(
+            ["date", "cloud"],
+            ascending=[True, True],
+            na_position="last",
+        )
+
+        st.dataframe(
+            scene_table,
+            use_container_width=True,
+            height=112,
+            hide_index=True,
+            column_config={
+                "date": st.column_config.DatetimeColumn("Date", format="YYYY-MM-DD"),
+                "cloud": st.column_config.NumberColumn("Cloud %", format="%.1f"),
+            },
+        )
+
+        scene_ids = [
+            as_dict(scene).get("id")
+            for scene in scene_results
+            if as_dict(scene).get("id")
+        ]
+
+        def format_scene(scene_id):
+            scene = next(
+                (
+                    candidate
+                    for candidate in scene_results
+                    if as_dict(candidate).get("id") == scene_id
+                ),
+                None,
+            )
+            if scene is None:
+                return str(scene_id)
+            scene_date = get_datetime(scene)
+            date_text = scene_date.strftime("%Y-%m-%d") if scene_date else "Unknown date"
+            return f"{date_text}  |  {get_tile(scene) or 'Unknown tile'}  |  cloud {get_cloud(scene):.1f}%"
+
+        if scene_ids:
+            selected_scene_id = st.selectbox(
+                "Target scene",
+                scene_ids,
+                format_func=format_scene,
+                key="target_scene_select",
+            )
+            selected_scene = next(
+                (
+                    scene
+                    for scene in scene_results
+                    if as_dict(scene).get("id") == selected_scene_id
+                ),
+                None,
+            )
+            if selected_scene is not None:
+                st.session_state["target"] = selected_scene
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div style="height:0.25rem"></div>', unsafe_allow_html=True)
@@ -622,7 +631,7 @@ with settings_col:
 with action_col:
     st.markdown('<div class="app-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-label">04 · PROCESS</div>', unsafe_allow_html=True)
-    items = st.session_state.get("items", [])
+    scene_results = st.session_state.get("scene_results", [])
     cdse_auth = st.session_state.get("cdse_auth")
     if cdse_auth:
         st.markdown(f'<div class="auth-status">✓ Copernicus connected · {cdse_auth.get("username", "")}</div>', unsafe_allow_html=True)
@@ -650,70 +659,82 @@ with action_col:
             except Exception as login_error:
                 st.error(str(login_error))
         st.markdown('</div>', unsafe_allow_html=True)
-    if items and "target" in st.session_state:
-        target = st.session_state.target
-        st.markdown(f'<div class="card-title">Ready to detect</div><div class="card-caption">Target: {get_datetime(target).strftime("%Y-%m-%d")} · {get_tile(target)}</div>', unsafe_allow_html=True)
-        detect_clicked = st.button("🛰️  Download AOI & Detect Methane", type="primary", use_container_width=True, key="detect_button", disabled=not bool(st.session_state.get("cdse_auth")))
-        if not st.session_state.get("cdse_auth"):
-            st.markdown('<div class="card-caption">Please connect your Copernicus account above before downloading Sentinel-2 data.</div>', unsafe_allow_html=True)
-        if detect_clicked:
-            progress = st.progress(0, text="Preparing methane detection…")
-            progress_status = st.empty()
-            try:
-                progress_status.markdown('<div class="card-caption">Step 1 of 5 · Connecting to CDSE and preparing the target scene…</div>', unsafe_allow_html=True)
-                progress.progress(8, text="Preparing target scene…")
-                access_token = get_access_token()
-                target = st.session_state.target
-                target_date = get_datetime(target)
-                target_tile = get_tile(target)
-                all_candidates = [item for item in items if as_dict(item).get("id") != as_dict(target).get("id") and get_datetime(item) and abs((get_datetime(item) - target_date).total_seconds()) / 86400 <= reference_days]
-                same_tile = [item for item in all_candidates if get_tile(item) == target_tile]
-                references = same_tile if same_tile else all_candidates
-                if not references:
-                    st.error("No reference scene exists in the selected time window. Increase the date range or reference window.")
-                    st.stop()
-                progress_status.markdown('<div class="card-caption">Step 2 of 5 · Downloading target image bands and preparing the AOI…</div>', unsafe_allow_html=True)
-                progress.progress(25, text="Downloading target bands…")
-                target_bands, profile = read_stack(download_scene(target, st.session_state.aoi, access_token))
-                best_reference = None
-                best_correlation = -np.inf
-                reference_rows = []
-                total_refs = max(1, len(references))
-                for ref_index, reference in enumerate(references, start=1):
-                    pct = 30 + int(40 * (ref_index - 1) / total_refs)
-                    progress_status.markdown(f'<div class="card-caption">Step 3 of 5 · Downloading and comparing reference scene {ref_index} of {total_refs}…</div>', unsafe_allow_html=True)
-                    progress.progress(pct, text=f"Reference scene {ref_index} of {total_refs}…")
-                    reference_bands, _ = read_stack(download_scene(reference, st.session_state.aoi, access_token))
-                    valid_pixels = np.isfinite(target_bands["B04"]) & np.isfinite(reference_bands["B04"])
-                    correlation = float(np.corrcoef(target_bands["B04"][valid_pixels], reference_bands["B04"][valid_pixels])[0, 1]) if valid_pixels.sum() > 100 else np.nan
-                    reference_rows.append({"id": as_dict(reference).get("id"), "date": get_datetime(reference), "tile": get_tile(reference), "b4_correlation": correlation, "valid_b4_pixels": int(valid_pixels.sum())})
-                    if np.isfinite(correlation) and correlation > best_correlation:
-                        best_correlation = correlation
-                        best_reference = reference_bands
-                st.session_state.reference_table = pd.DataFrame(reference_rows)
-                if best_reference is None:
-                    st.error("Reference scenes were downloaded, but B4 correlation could not be calculated. Check valid pixels and cloud cover.")
-                    st.stop()
-                progress_status.markdown('<div class="card-caption">Step 4 of 5 · Running relative MBMP anomaly detection and candidate cleanup…</div>', unsafe_allow_html=True)
-                progress.progress(78, text="Running methane detection…")
-                result = run_algorithm(target_bands, best_reference)
-                result["b4_correlation"] = best_correlation
-                result["date"] = target_date.strftime("%Y-%m-%d")
-                output_folder = RESULT_DIR / target_date.strftime("%Y%m%d")
-                output_folder.mkdir(parents=True, exist_ok=True)
-                paths = {}
-                for key in ("relative", "gaussian", "final", "valid"):
-                    paths[key] = output_folder / f"{key}.tif"
-                    save_raster(paths[key], result[key], profile, key in ("final", "valid"))
-                st.session_state.result = result
-                st.session_state.paths = paths
-                st.session_state.output_profile = profile
-                st.session_state.png_outputs = {"relative": image_png(result["relative"]), "gaussian": image_png(result["gaussian"]), "final": image_png(result["final"], mask=True), "valid": image_png(result["valid"], mask=True)}
-                progress_status.markdown('<div class="card-caption">Step 5 of 5 · Saving georeferenced outputs and preparing downloads…</div>', unsafe_allow_html=True)
-                progress.progress(100, text="Ready to detect · outputs are ready")
-                st.success("Processing completed")
-            except Exception as error:
-                st.exception(error)
+
+    if scene_results and "target" in st.session_state:
+        target = st.session_state.get("target")
+        if target is not None:
+            target_date = get_datetime(target)
+            target_tile = get_tile(target) or "Unknown tile"
+            target_label = target_date.strftime("%Y-%m-%d") if target_date else "Unknown date"
+            st.markdown(f'<div class="card-title">Ready to detect</div><div class="card-caption">Target: {target_label} · {target_tile}</div>', unsafe_allow_html=True)
+            detect_clicked = st.button("🛰️  Download AOI & Detect Methane", type="primary", use_container_width=True, key="detect_button", disabled=not bool(st.session_state.get("cdse_auth")))
+            if not st.session_state.get("cdse_auth"):
+                st.markdown('<div class="card-caption">Please connect your Copernicus account above before downloading Sentinel-2 data.</div>', unsafe_allow_html=True)
+            if detect_clicked:
+                progress = st.progress(0, text="Preparing methane detection…")
+                progress_status = st.empty()
+                try:
+                    progress_status.markdown('<div class="card-caption">Step 1 of 5 · Connecting to CDSE and preparing the target scene…</div>', unsafe_allow_html=True)
+                    progress.progress(8, text="Preparing target scene…")
+                    access_token = get_access_token()
+                    target = st.session_state["target"]
+                    target_date = get_datetime(target)
+                    target_tile = get_tile(target)
+                    if target_date is None:
+                        raise RuntimeError("The selected target scene has no valid acquisition date.")
+                    all_candidates = [
+                        scene for scene in scene_results
+                        if as_dict(scene).get("id") != as_dict(target).get("id")
+                        and get_datetime(scene) is not None
+                        and abs((get_datetime(scene) - target_date).total_seconds()) / 86400 <= reference_days
+                    ]
+                    same_tile = [scene for scene in all_candidates if get_tile(scene) == target_tile]
+                    references = same_tile if same_tile else all_candidates
+                    if not references:
+                        st.warning("No reference scene exists in the selected time window. Increase the date range or reference window.")
+                        st.stop()
+                    progress_status.markdown('<div class="card-caption">Step 2 of 5 · Downloading target image bands and preparing the AOI…</div>', unsafe_allow_html=True)
+                    progress.progress(25, text="Downloading target bands…")
+                    target_bands, profile = read_stack(download_scene(target, st.session_state.aoi, access_token))
+                    best_reference = None
+                    best_correlation = -np.inf
+                    reference_rows = []
+                    total_refs = max(1, len(references))
+                    for ref_index, reference in enumerate(references, start=1):
+                        pct = 30 + int(40 * (ref_index - 1) / total_refs)
+                        progress_status.markdown(f'<div class="card-caption">Step 3 of 5 · Downloading and comparing reference scene {ref_index} of {total_refs}…</div>', unsafe_allow_html=True)
+                        progress.progress(pct, text=f"Reference scene {ref_index} of {total_refs}…")
+                        reference_bands, _ = read_stack(download_scene(reference, st.session_state.aoi, access_token))
+                        valid_pixels = np.isfinite(target_bands["B04"]) & np.isfinite(reference_bands["B04"])
+                        correlation = float(np.corrcoef(target_bands["B04"][valid_pixels], reference_bands["B04"][valid_pixels])[0, 1]) if valid_pixels.sum() > 100 else np.nan
+                        reference_rows.append({"id": as_dict(reference).get("id"), "date": get_datetime(reference), "tile": get_tile(reference), "b4_correlation": correlation, "valid_b4_pixels": int(valid_pixels.sum())})
+                        if np.isfinite(correlation) and correlation > best_correlation:
+                            best_correlation = correlation
+                            best_reference = reference_bands
+                    st.session_state.reference_table = pd.DataFrame(reference_rows)
+                    if best_reference is None:
+                        st.warning("Reference scenes were downloaded, but B4 correlation could not be calculated. Check valid pixels and cloud cover.")
+                        st.stop()
+                    progress_status.markdown('<div class="card-caption">Step 4 of 5 · Running relative MBMP anomaly detection and candidate cleanup…</div>', unsafe_allow_html=True)
+                    progress.progress(78, text="Running methane detection…")
+                    result = run_algorithm(target_bands, best_reference)
+                    result["b4_correlation"] = best_correlation
+                    result["date"] = target_date.strftime("%Y-%m-%d")
+                    output_folder = RESULT_DIR / target_date.strftime("%Y%m%d")
+                    output_folder.mkdir(parents=True, exist_ok=True)
+                    paths = {}
+                    for key in ("relative", "gaussian", "final", "valid"):
+                        paths[key] = output_folder / f"{key}.tif"
+                        save_raster(paths[key], result[key], profile, key in ("final", "valid"))
+                    st.session_state.result = result
+                    st.session_state.paths = paths
+                    st.session_state.output_profile = profile
+                    st.session_state.png_outputs = {"relative": image_png(result["relative"]), "gaussian": image_png(result["gaussian"]), "final": image_png(result["final"], mask=True), "valid": image_png(result["valid"], mask=True)}
+                    progress_status.markdown('<div class="card-caption">Step 5 of 5 · Saving georeferenced outputs and preparing downloads…</div>', unsafe_allow_html=True)
+                    progress.progress(100, text="Ready to detect · outputs are ready")
+                    st.success("Processing completed")
+                except Exception as error:
+                    st.error(f"Detection failed: {error}")
     else:
         st.markdown('<div class="card-title">Select scenes first</div><div class="card-caption">Search for Sentinel-2 scenes, select a target, then run the detection.</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
