@@ -703,6 +703,14 @@ div[data-baseweb="input"] input,
     color: #ffffff !important;
 }
 
+/* ---------- Start date / End date text ---------- */
+.stDateInput input,
+.stDateInput input[type="text"] {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+}
+
 /* Keep dark input fields readable even when browser autofill is active */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
